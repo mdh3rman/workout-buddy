@@ -1,7 +1,7 @@
 // src/components/EndWorkoutModal.tsx
 import { useState } from 'react'
 import { useWorkoutStore } from '../store/workoutStore'
-import { savePlan } from '../db/index'
+import { savePlan, saveSession } from '../db/index'
 import type { WorkoutSession, SessionExercise } from '../types'
 
 function calcDuration(session: WorkoutSession): string {
@@ -30,9 +30,11 @@ export function EndWorkoutModal({ session, onClose }: Props) {
     setSaving(true)
     const completed = await endSession()
     if (saveAsPlan && planName.trim()) {
+      const name = planName.trim()
+      await saveSession({ ...completed, name })
       await savePlan({
         id: crypto.randomUUID(),
-        name: planName.trim(),
+        name,
         createdAt: new Date().toISOString(),
         lastUsedAt: null,
         exercises: completed.exercises.map(ex => ({
