@@ -34,7 +34,7 @@ export function HomeScreen() {
     db.exercises.toArray().then(exs => {
       setExerciseNames(Object.fromEntries(exs.map(e => [e.id, e.name])))
     })
-  }, [activeSession])
+  }, [])
 
   useEffect(() => {
     if (!activeSession) return
