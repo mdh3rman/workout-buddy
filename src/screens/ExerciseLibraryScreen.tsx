@@ -1,9 +1,95 @@
 // src/screens/ExerciseLibraryScreen.tsx
 import { useState, useEffect } from 'react'
+import { Plus, X } from 'lucide-react'
 import { db, getCompletedSessions } from '../db/index'
-import type { Exercise, ExerciseType, WorkoutSession } from '../types'
+import type { Exercise, ExerciseType, MuscleGroup, WorkoutSession } from '../types'
 
 type FilterType = ExerciseType | 'all'
+
+const EXERCISE_TYPES: ExerciseType[] = ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight']
+const MUSCLE_GROUPS: MuscleGroup[] = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full body']
+
+function NewExerciseSheet({ onSaved, onClose }: { onSaved: () => void; onClose: () => void }) {
+  const [name, setName] = useState('')
+  const [type, setType] = useState<ExerciseType>('barbell')
+  const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('chest')
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!name.trim()) return
+    setSaving(true)
+    await db.exercises.add({
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      type,
+      muscleGroup,
+    })
+    setSaving(false)
+    onSaved()
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex flex-col">
+      <div className="flex-1 bg-black/60" onClick={onClose} />
+      <div className="bg-zinc-900 rounded-t-2xl flex flex-col">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-800">
+          <h2 className="text-white font-bold text-base">New Exercise</h2>
+          <button onClick={onClose}><X size={20} className="text-zinc-400" /></button>
+        </div>
+        <div className="p-4 flex flex-col gap-4">
+          <input
+            type="text"
+            placeholder="Exercise name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none placeholder:text-zinc-500"
+          />
+          <div>
+            <p className="text-zinc-500 text-xs uppercase tracking-wider font-bold mb-2">Type</p>
+            <div className="flex flex-wrap gap-2">
+              {EXERCISE_TYPES.map(t => (
+                <button
+                  key={t}
+                  onClick={() => setType(t)}
+                  className={`text-xs px-3 py-1.5 rounded-full font-medium capitalize ${
+                    type === t ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-400'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-zinc-500 text-xs uppercase tracking-wider font-bold mb-2">Muscle Group</p>
+            <div className="flex flex-wrap gap-2">
+              {MUSCLE_GROUPS.map(g => (
+                <button
+                  key={g}
+                  onClick={() => setMuscleGroup(g)}
+                  className={`text-xs px-3 py-1.5 rounded-full font-medium capitalize ${
+                    muscleGroup === g ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-400'
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="px-4 pb-6 pt-2 border-t border-zinc-800">
+          <button
+            onClick={handleSave}
+            disabled={!name.trim() || saving}
+            className="w-full bg-orange-500 disabled:opacity-40 text-white font-bold py-3 rounded-xl text-sm"
+          >
+            Save Exercise
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function ExerciseLibraryScreen() {
   const [exercises, setExercises] = useState<Exercise[]>([])
@@ -11,8 +97,13 @@ export function ExerciseLibraryScreen() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [selected, setSelected] = useState<Exercise | null>(null)
   const [history, setHistory] = useState<WorkoutSession[]>([])
+  const [showNew, setShowNew] = useState(false)
 
-  useEffect(() => { db.exercises.toArray().then(setExercises) }, [])
+  const load = () => db.exercises.toArray().then(exs =>
+    setExercises(exs.sort((a, b) => a.name.localeCompare(b.name)))
+  )
+
+  useEffect(() => { load() }, [])
 
   const filtered = exercises.filter(ex => {
     const matchSearch = ex.name.toLowerCase().includes(search.toLowerCase())
@@ -67,7 +158,15 @@ export function ExerciseLibraryScreen() {
 
   return (
     <div className="p-4">
-      <h1 className="text-white font-extrabold text-xl mb-4 pt-2">Exercises</h1>
+      <div className="flex items-center justify-between mb-4 pt-2">
+        <h1 className="text-white font-extrabold text-xl">Exercises</h1>
+        <button
+          onClick={() => setShowNew(true)}
+          className="flex items-center gap-1.5 bg-orange-500 text-white text-xs font-bold px-3 py-2 rounded-lg"
+        >
+          <Plus size={14} /> New
+        </button>
+      </div>
       <input
         type="text"
         placeholder="Search exercises..."
@@ -101,6 +200,12 @@ export function ExerciseLibraryScreen() {
           <span className="text-zinc-600 text-lg">›</span>
         </button>
       ))}
+      {showNew && (
+        <NewExerciseSheet
+          onSaved={() => { setShowNew(false); load() }}
+          onClose={() => setShowNew(false)}
+        />
+      )}
     </div>
   )
 }
