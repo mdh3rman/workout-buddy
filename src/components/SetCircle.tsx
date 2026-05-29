@@ -12,7 +12,7 @@ export function SetCircle({ reps, targetReps, completedAt, onTap }: SetCirclePro
   const circleClass = isPending
     ? 'bg-zinc-800 border-2 border-dashed border-zinc-600'
     : isFailed
-    ? 'bg-orange-950 border-2 border-orange-500'
+    ? 'bg-red-950 border-2 border-red-500'
     : 'bg-orange-500'
 
   const textClass = isPending

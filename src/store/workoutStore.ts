@@ -37,7 +37,7 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       exercises,
     }
     set({ activeSession: session, currentScreen: 'active-workout' })
-    saveSession(session)
+    saveSession(session).catch(err => console.error('Failed to persist session:', err))
   },
 
   addExercise: (exerciseId, sets, reps, weight) => {
@@ -55,7 +55,7 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       exercises: [...activeSession.exercises, exercise],
     }
     set({ activeSession: updated })
-    saveSession(updated)
+    saveSession(updated).catch(err => console.error('Failed to persist session:', err))
   },
 
   tapSet: (exerciseIdx, setIdx) => {
@@ -75,7 +75,7 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
     })
     const updated: WorkoutSession = { ...activeSession, exercises }
     set({ activeSession: updated })
-    saveSession(updated)
+    saveSession(updated).catch(err => console.error('Failed to persist session:', err))
     if (wasCompleting) get().startRest()
   },
 
@@ -88,7 +88,7 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
     })
     const updated: WorkoutSession = { ...activeSession, exercises }
     set({ activeSession: updated })
-    saveSession(updated)
+    saveSession(updated).catch(err => console.error('Failed to persist session:', err))
   },
 
   endSession: async () => {

@@ -4,7 +4,7 @@ const STEP: Record<ExerciseType, number> = {
   barbell: 2.5,
   dumbbell: 1.25,
   cable: 2.5,
-  machine: 5,
+  machine: 2.5,
   bodyweight: 0,
 }
 
@@ -12,7 +12,7 @@ const MIN: Record<ExerciseType, number> = {
   barbell: 20,
   dumbbell: 1.25,
   cable: 2.5,
-  machine: 5,
+  machine: 2.5,
   bodyweight: 0,
 }
 

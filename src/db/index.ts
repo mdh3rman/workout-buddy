@@ -52,6 +52,10 @@ export async function getPlans(): Promise<WorkoutPlan[]> {
   })
 }
 
+export async function updatePlanLastUsed(id: string): Promise<void> {
+  await db.workoutPlans.update(id, { lastUsedAt: new Date().toISOString() })
+}
+
 export async function seedExercises(exercises: Exercise[]): Promise<void> {
   const count = await db.exercises.count()
   if (count === 0) {

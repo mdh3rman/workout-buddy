@@ -5,7 +5,7 @@ import App from './App.tsx'
 import { seedExercises } from './db/index'
 import { EXERCISES } from './db/exercises'
 
-seedExercises(EXERCISES)
+seedExercises(EXERCISES).catch(err => console.error('Failed to seed exercises:', err))
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

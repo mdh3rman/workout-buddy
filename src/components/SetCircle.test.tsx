@@ -30,6 +30,6 @@ describe('SetCircle', () => {
   it('applies failed styles when reps < targetReps', () => {
     render(<SetCircle reps={4} targetReps={5} completedAt="2026-05-01T10:00:00Z" onTap={vi.fn()} />)
     const btn = screen.getByRole('button')
-    expect(btn.className).toContain('bg-orange-950')
+    expect(btn.className).toContain('bg-red-950')
   })
 })

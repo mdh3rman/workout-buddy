@@ -1,9 +1,8 @@
 // src/screens/PlansScreen.tsx
 import { useState, useEffect } from 'react'
 import { Trash2 } from 'lucide-react'
-import { getPlans, deletePlan } from '../db/index'
+import { getPlans, deletePlan, updatePlanLastUsed, db } from '../db/index'
 import { useWorkoutStore } from '../store/workoutStore'
-import { db } from '../db/index'
 import type { WorkoutPlan, SessionExercise } from '../types'
 
 export function PlansScreen() {
@@ -24,7 +23,8 @@ export function PlansScreen() {
     load()
   }
 
-  const startFromPlan = (plan: WorkoutPlan) => {
+  const startFromPlan = async (plan: WorkoutPlan) => {
+    await updatePlanLastUsed(plan.id)
     const exercises: SessionExercise[] = plan.exercises.map(pe => ({
       exerciseId: pe.exerciseId,
       targetSets: pe.sets,

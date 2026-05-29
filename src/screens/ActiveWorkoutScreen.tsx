@@ -57,21 +57,24 @@ export function ActiveWorkoutScreen() {
     })
   }, [])
 
+  const exerciseIds = (activeSession?.exercises ?? []).map(e => e.exerciseId).join(',')
+
   useEffect(() => {
-    if (!activeSession || Object.keys(exerciseMap).length === 0) return
+    if (!exerciseIds || Object.keys(exerciseMap).length === 0) return
+    const idList = exerciseIds.split(',')
     const load = async () => {
       const entries: Record<string, string> = {}
-      for (const ex of activeSession.exercises) {
-        const perf = await getPreviousPerformance(ex.exerciseId)
-        const exInfo = exerciseMap[ex.exerciseId]
+      for (const exerciseId of idList) {
+        const perf = await getPreviousPerformance(exerciseId)
+        const exInfo = exerciseMap[exerciseId]
         if (perf && exInfo) {
-          entries[ex.exerciseId] = formatPreviousPerformance(perf, exInfo.type)
+          entries[exerciseId] = formatPreviousPerformance(perf, exInfo.type)
         }
       }
       setPrevPerf(entries)
     }
     load()
-  }, [activeSession?.exercises.length, Object.keys(exerciseMap).length])
+  }, [exerciseIds, exerciseMap])
 
   if (!activeSession) return null
 
@@ -99,7 +102,7 @@ export function ActiveWorkoutScreen() {
           const doneSets = ex.sets.filter(s => s.completedAt !== null).length
 
           return (
-            <div key={ei} className="border-b border-zinc-800">
+            <div key={`${ex.exerciseId}-${ei}`} className="border-b border-zinc-800">
               {/* Collapsed header */}
               <button
                 className="w-full flex justify-between items-center px-4 py-3"

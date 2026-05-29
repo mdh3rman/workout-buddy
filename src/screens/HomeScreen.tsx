@@ -2,8 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Play } from 'lucide-react'
 import { useWorkoutStore } from '../store/workoutStore'
-import { getPlans } from '../db/index'
-import { db } from '../db/index'
+import { getPlans, updatePlanLastUsed, db } from '../db/index'
 import type { WorkoutPlan, SessionExercise } from '../types'
 
 function formatRelativeDate(iso: string | null): string {
@@ -28,6 +27,7 @@ export function HomeScreen() {
   const [plans, setPlans] = useState<WorkoutPlan[]>([])
   const [exerciseNames, setExerciseNames] = useState<Record<string, string>>({})
   const [duration, setDuration] = useState('')
+  const sessionStartedAt = activeSession?.startedAt
 
   useEffect(() => {
     getPlans().then(setPlans)
@@ -37,14 +37,15 @@ export function HomeScreen() {
   }, [])
 
   useEffect(() => {
-    if (!activeSession) return
-    const tick = () => setDuration(calcResumeDuration(activeSession.startedAt))
+    if (!sessionStartedAt) return
+    const tick = () => setDuration(calcResumeDuration(sessionStartedAt))
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [activeSession?.startedAt])
+  }, [sessionStartedAt])
 
-  const startFromPlan = (plan: WorkoutPlan) => {
+  const startFromPlan = async (plan: WorkoutPlan) => {
+    await updatePlanLastUsed(plan.id)
     const exercises: SessionExercise[] = plan.exercises.map(pe => ({
       exerciseId: pe.exerciseId,
       targetSets: pe.sets,

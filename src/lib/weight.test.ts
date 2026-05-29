@@ -5,7 +5,7 @@ describe('stepSize', () => {
   it('returns 2.5 for barbell', () => expect(stepSize('barbell')).toBe(2.5))
   it('returns 1.25 for dumbbell', () => expect(stepSize('dumbbell')).toBe(1.25))
   it('returns 2.5 for cable', () => expect(stepSize('cable')).toBe(2.5))
-  it('returns 5 for machine', () => expect(stepSize('machine')).toBe(5))
+  it('returns 2.5 for machine', () => expect(stepSize('machine')).toBe(2.5))
   it('returns 0 for bodyweight', () => expect(stepSize('bodyweight')).toBe(0))
 })
 

@@ -4,6 +4,26 @@ import { X } from 'lucide-react'
 import { defaultWeight, adjustWeight, formatWeight } from '../lib/weight'
 import type { Exercise } from '../types'
 
+interface StepperProps {
+  label: string
+  display: string
+  onDecrease: () => void
+  onIncrease: () => void
+}
+
+function Stepper({ label, display, onDecrease, onIncrease }: StepperProps) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="text-zinc-400 text-sm">{label}</span>
+      <div className="flex items-center gap-4">
+        <button onClick={onDecrease} className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-white text-lg">−</button>
+        <span className="text-white font-bold text-base min-w-[60px] text-center">{display}</span>
+        <button onClick={onIncrease} className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-white text-lg">+</button>
+      </div>
+    </div>
+  )
+}
+
 interface SetConfigSheetProps {
   exercise: Exercise
   onAdd: (sets: number, reps: number, weight: number) => void
@@ -14,24 +34,6 @@ export function SetConfigSheet({ exercise, onAdd, onClose }: SetConfigSheetProps
   const [sets, setSets] = useState(3)
   const [reps, setReps] = useState(8)
   const [weight, setWeight] = useState(defaultWeight(exercise.type))
-
-  interface StepperProps {
-    label: string
-    display: string
-    onDecrease: () => void
-    onIncrease: () => void
-  }
-
-  const Stepper = ({ label, display, onDecrease, onIncrease }: StepperProps) => (
-    <div className="flex justify-between items-center">
-      <span className="text-zinc-400 text-sm">{label}</span>
-      <div className="flex items-center gap-4">
-        <button onClick={onDecrease} className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-white text-lg">−</button>
-        <span className="text-white font-bold text-base min-w-[60px] text-center">{display}</span>
-        <button onClick={onIncrease} className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-white text-lg">+</button>
-      </div>
-    </div>
-  )
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col">
@@ -47,11 +49,11 @@ export function SetConfigSheet({ exercise, onAdd, onClose }: SetConfigSheetProps
         <div className="flex flex-col gap-5 mb-6">
           <Stepper label="Sets" display={String(sets)}
             onDecrease={() => setSets(s => Math.max(1, s - 1))}
-            onIncrease={() => setSets(s => s + 1)}
+            onIncrease={() => setSets(s => Math.min(20, s + 1))}
           />
           <Stepper label="Reps" display={String(reps)}
             onDecrease={() => setReps(r => Math.max(1, r - 1))}
-            onIncrease={() => setReps(r => r + 1)}
+            onIncrease={() => setReps(r => Math.min(50, r + 1))}
           />
           {exercise.type !== 'bodyweight' && (
             <Stepper label="Weight" display={formatWeight(weight, exercise.type)}
