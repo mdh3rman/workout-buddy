@@ -36,7 +36,7 @@ export function ExercisePicker({ onSelect, onClose }: ExercisePickerProps) {
   ]
 
   return (
-    <div className="fixed inset-0 z-30 flex flex-col">
+    <div className="fixed inset-0 z-50 flex flex-col">
       <div className="flex-1 bg-black/60" onClick={onClose} />
       <div className="bg-zinc-900 rounded-t-2xl flex flex-col max-h-[80vh]">
         <div className="p-4 border-b border-zinc-800">
