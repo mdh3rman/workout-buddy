@@ -1,22 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Trash2, Plus } from 'lucide-react'
-import { savePlan } from '../db/index'
+import { savePlan, db } from '../db/index'
 import { ExercisePicker } from './ExercisePicker'
 import { SetConfigSheet } from './SetConfigSheet'
-import type { Exercise, PlanExercise } from '../types'
+import type { Exercise, PlanExercise, WorkoutPlan } from '../types'
 
 interface Props {
+  plan?: WorkoutPlan
   onSaved: () => void
   onClose: () => void
 }
 
-export function CreatePlanSheet({ onSaved, onClose }: Props) {
-  const [name, setName] = useState('')
-  const [exercises, setExercises] = useState<PlanExercise[]>([])
+export function CreatePlanSheet({ plan, onSaved, onClose }: Props) {
+  const [name, setName] = useState(plan?.name ?? '')
+  const [exercises, setExercises] = useState<PlanExercise[]>(plan?.exercises ?? [])
   const [exerciseLabels, setExerciseLabels] = useState<Record<string, string>>({})
   const [showPicker, setShowPicker] = useState(false)
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!plan || plan.exercises.length === 0) return
+    const ids = plan.exercises.map(e => e.exerciseId)
+    db.exercises.where('id').anyOf(ids).toArray().then(exs => {
+      setExerciseLabels(Object.fromEntries(exs.map(e => [e.id, e.name])))
+    })
+  }, [plan])
 
   const handleAdd = (sets: number, reps: number, weight: number) => {
     if (!selectedExercise) return
@@ -33,29 +42,29 @@ export function CreatePlanSheet({ onSaved, onClose }: Props) {
     if (!name.trim() || exercises.length === 0) return
     setSaving(true)
     await savePlan({
-      id: crypto.randomUUID(),
+      id: plan?.id ?? crypto.randomUUID(),
       name: name.trim(),
-      createdAt: new Date().toISOString(),
-      lastUsedAt: null,
+      createdAt: plan?.createdAt ?? new Date().toISOString(),
+      lastUsedAt: plan?.lastUsedAt ?? null,
       exercises,
     })
     setSaving(false)
     onSaved()
   }
 
+  const isEdit = !!plan
+
   return (
     <>
       <div className="fixed inset-0 z-40 flex flex-col">
         <div className="flex-1 bg-black/60" onClick={onClose} />
         <div className="bg-zinc-900 rounded-t-2xl flex flex-col max-h-[85vh]">
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-800 shrink-0">
-            <h2 className="text-white font-bold text-base">New Plan</h2>
+            <h2 className="text-white font-bold text-base">{isEdit ? 'Edit Plan' : 'New Plan'}</h2>
             <button onClick={onClose}><X size={20} className="text-zinc-400" /></button>
           </div>
 
           <div className="overflow-y-auto flex-1 p-4">
-            {/* Plan name */}
             <input
               type="text"
               placeholder="Plan name (e.g. Push Day A)"
@@ -64,7 +73,6 @@ export function CreatePlanSheet({ onSaved, onClose }: Props) {
               className="w-full bg-zinc-800 text-white text-sm rounded-xl px-4 py-3 outline-none placeholder:text-zinc-500 mb-4"
             />
 
-            {/* Exercise list */}
             {exercises.length > 0 && (
               <div className="mb-4 flex flex-col gap-2">
                 {exercises.map((pe, i) => (
@@ -83,7 +91,6 @@ export function CreatePlanSheet({ onSaved, onClose }: Props) {
               </div>
             )}
 
-            {/* Add exercise */}
             <button
               onClick={() => setShowPicker(true)}
               className="w-full border-2 border-dashed border-zinc-700 rounded-xl py-3 text-orange-500 font-semibold text-sm flex items-center justify-center gap-2 mb-4"
@@ -92,14 +99,13 @@ export function CreatePlanSheet({ onSaved, onClose }: Props) {
             </button>
           </div>
 
-          {/* Save button */}
           <div className="px-4 pb-6 pt-2 shrink-0 border-t border-zinc-800">
             <button
               onClick={handleSave}
               disabled={!name.trim() || exercises.length === 0 || saving}
               className="w-full bg-orange-500 disabled:opacity-40 text-white font-bold py-3 rounded-xl text-sm"
             >
-              Save Plan
+              {isEdit ? 'Save Changes' : 'Save Plan'}
             </button>
           </div>
         </div>

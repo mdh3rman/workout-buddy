@@ -1,6 +1,6 @@
 // src/screens/PlansScreen.tsx
 import { useState, useEffect } from 'react'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, Pencil } from 'lucide-react'
 import { getPlans, deletePlan, updatePlanLastUsed, db } from '../db/index'
 import { useWorkoutStore } from '../store/workoutStore'
 import { CreatePlanSheet } from '../components/CreatePlanSheet'
@@ -11,6 +11,7 @@ export function PlansScreen() {
   const [exerciseNames, setExerciseNames] = useState<Record<string, string>>({})
   const [expanded, setExpanded] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [editingPlan, setEditingPlan] = useState<WorkoutPlan | null>(null)
   const startSession = useWorkoutStore(s => s.startSession)
 
   const load = () => {
@@ -60,6 +61,7 @@ export function PlansScreen() {
               </button>
               <div className="flex items-center gap-2">
                 <button onClick={() => startFromPlan(plan)} className="bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg">Start</button>
+                <button onClick={() => setEditingPlan(plan)}><Pencil size={16} className="text-zinc-500" /></button>
                 <button onClick={() => handleDelete(plan.id)}><Trash2 size={16} className="text-zinc-600" /></button>
               </div>
             </div>
@@ -80,6 +82,13 @@ export function PlansScreen() {
         <CreatePlanSheet
           onSaved={() => { setShowCreate(false); load() }}
           onClose={() => setShowCreate(false)}
+        />
+      )}
+      {editingPlan && (
+        <CreatePlanSheet
+          plan={editingPlan}
+          onSaved={() => { setEditingPlan(null); load() }}
+          onClose={() => setEditingPlan(null)}
         />
       )}
     </div>
