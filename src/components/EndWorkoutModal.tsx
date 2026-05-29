@@ -59,30 +59,32 @@ export function EndWorkoutModal({ session, onClose }: Props) {
           </p>
         </div>
 
-        <div className="bg-zinc-800 rounded-xl p-4 mb-4">
-          <p className="text-zinc-400 text-xs uppercase tracking-wider font-bold mb-3">Save as plan?</p>
-          <input
-            type="text"
-            placeholder="Plan name (e.g. Push Day A)"
-            value={planName}
-            onChange={e => setPlanName(e.target.value)}
-            className="w-full bg-zinc-700 text-white text-sm rounded-lg px-3 py-2.5 outline-none placeholder:text-zinc-500 mb-3"
-          />
-          <button
-            onClick={() => finish(true)}
-            disabled={!planName.trim() || saving}
-            className="w-full bg-orange-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg text-sm"
-          >
-            Save as Plan
-          </button>
-        </div>
+        {!session.planId && (
+          <div className="bg-zinc-800 rounded-xl p-4 mb-4">
+            <p className="text-zinc-400 text-xs uppercase tracking-wider font-bold mb-3">Save as plan?</p>
+            <input
+              type="text"
+              placeholder="Plan name (e.g. Push Day A)"
+              value={planName}
+              onChange={e => setPlanName(e.target.value)}
+              className="w-full bg-zinc-700 text-white text-sm rounded-lg px-3 py-2.5 outline-none placeholder:text-zinc-500 mb-3"
+            />
+            <button
+              onClick={() => finish(true)}
+              disabled={!planName.trim() || saving}
+              className="w-full bg-orange-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg text-sm"
+            >
+              Save as Plan
+            </button>
+          </div>
+        )}
 
         <button
           onClick={() => finish(false)}
           disabled={saving}
-          className="w-full text-zinc-500 text-sm py-2"
+          className={`w-full text-sm py-2 ${session.planId ? 'bg-orange-500 text-white font-bold rounded-xl' : 'text-zinc-500'}`}
         >
-          Don't save — just log it
+          {session.planId ? 'Finish Workout' : "Don't save — just log it"}
         </button>
       </div>
     </div>
