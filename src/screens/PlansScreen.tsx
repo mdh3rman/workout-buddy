@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react'
 import { Trash2, Plus, Pencil } from 'lucide-react'
 import { getPlans, deletePlan, updatePlanLastUsed, db } from '../db/index'
+import { buildSessionExercises } from '../lib/warmup'
 import { useWorkoutStore } from '../store/workoutStore'
 import { CreatePlanSheet } from '../components/CreatePlanSheet'
-import type { WorkoutPlan, SessionExercise } from '../types'
+import type { WorkoutPlan } from '../types'
 
 export function PlansScreen() {
   const [plans, setPlans] = useState<WorkoutPlan[]>([])
@@ -28,13 +29,7 @@ export function PlansScreen() {
 
   const startFromPlan = async (plan: WorkoutPlan) => {
     await updatePlanLastUsed(plan.id)
-    const exercises: SessionExercise[] = plan.exercises.map(pe => ({
-      exerciseId: pe.exerciseId,
-      targetSets: pe.sets,
-      targetReps: pe.reps,
-      weight: pe.weight,
-      sets: Array.from({ length: pe.sets }, () => ({ reps: pe.reps, completedAt: null })),
-    }))
+    const exercises = await buildSessionExercises(plan.exercises)
     startSession(plan.id, plan.name, exercises)
   }
 

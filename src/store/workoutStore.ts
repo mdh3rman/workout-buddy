@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { saveSession, getActiveSession, deleteSession } from '../db/index'
-import type { WorkoutSession, SessionExercise, RestTimerState, Screen } from '../types'
+import { generateWarmupSets } from '../lib/warmup'
+import type { WorkoutSession, SessionExercise, SessionSet, RestTimerState, Screen, ExerciseType } from '../types'
 
 interface WorkoutStore {
   activeSession: WorkoutSession | null
@@ -8,7 +9,7 @@ interface WorkoutStore {
   currentScreen: Screen
 
   startSession: (planId?: string, name?: string, exercises?: SessionExercise[]) => void
-  addExercise: (exerciseId: string, sets: number, reps: number, weight: number) => void
+  addExercise: (exerciseId: string, exerciseType: ExerciseType, sets: number, reps: number, weight: number) => void
   tapSet: (exerciseIdx: number, setIdx: number) => void
   updateWeight: (exerciseIdx: number, newWeight: number) => void
   endSession: () => Promise<WorkoutSession>
@@ -41,15 +42,17 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
     saveSession(session).catch(err => console.error('Failed to persist session:', err))
   },
 
-  addExercise: (exerciseId, sets, reps, weight) => {
+  addExercise: (exerciseId, exerciseType, sets, reps, weight) => {
     const { activeSession } = get()
     if (!activeSession) return
+    const warmup = generateWarmupSets(weight, exerciseType)
+    const working: SessionSet[] = Array.from({ length: sets }, () => ({ reps, completedAt: null }))
     const exercise: SessionExercise = {
       exerciseId,
       targetSets: sets,
       targetReps: reps,
       weight,
-      sets: Array.from({ length: sets }, () => ({ reps, completedAt: null })),
+      sets: [...warmup, ...working],
     }
     const updated: WorkoutSession = {
       ...activeSession,
@@ -68,10 +71,11 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       const sets = ex.sets.map((s, si) => {
         if (si !== setIdx) return s
         if (s.completedAt === null) {
-          return { reps: ex.targetReps, completedAt: new Date().toISOString(), weight: ex.weight }
+          const completedReps = s.isWarmup ? s.reps : ex.targetReps
+          return { ...s, reps: completedReps, completedAt: new Date().toISOString(), weight: s.weight ?? ex.weight }
         }
         if (s.reps === 0) {
-          return { reps: ex.targetReps, completedAt: null }
+          return { ...s, reps: s.warmupTargetReps ?? ex.targetReps, completedAt: null, weight: undefined }
         }
         return { ...s, reps: s.reps - 1 }
       })

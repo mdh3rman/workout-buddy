@@ -23,7 +23,7 @@ function formatDuration(startedAt: string): string {
 function calcVolume(exercises: SessionExercise[]): number {
   return exercises.reduce((total, ex) => {
     const completedReps = ex.sets
-      .filter(s => s.completedAt !== null)
+      .filter(s => s.completedAt !== null && !s.isWarmup)
       .reduce((sum, s) => sum + s.reps, 0)
     return total + completedReps * ex.weight
   }, 0)
@@ -101,7 +101,9 @@ export function ActiveWorkoutScreen() {
         {activeSession.exercises.map((ex, ei) => {
           const info = exerciseMap[ex.exerciseId]
           const isExpanded = expandedIdx === ei
-          const doneSets = ex.sets.filter(s => s.completedAt !== null).length
+          const workingSets = ex.sets.filter(s => !s.isWarmup)
+          const warmupSets = ex.sets.filter(s => s.isWarmup)
+          const doneSets = workingSets.filter(s => s.completedAt !== null).length
 
           return (
             <div key={`${ex.exerciseId}-${ei}`} className="border-b border-zinc-800">
@@ -143,22 +145,49 @@ export function ActiveWorkoutScreen() {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-3 flex-wrap">
-                    {ex.sets.map((set, si) => (
-                      <div key={si} className="flex flex-col items-center gap-1">
-                        <SetCircle
-                          reps={set.reps}
-                          targetReps={ex.targetReps}
-                          completedAt={set.completedAt}
-                          onTap={() => tapSet(ei, si)}
-                        />
-                        <span className="text-zinc-600 text-[9px]">
-                          {set.completedAt
-                            ? (info?.type === 'bodyweight' ? 'BW' : `${set.weight ?? ex.weight}kg`)
-                            : 'pending'}
-                        </span>
+                  {warmupSets.length > 0 && (
+                    <>
+                      <p className="text-zinc-600 text-xs font-semibold uppercase tracking-wider mb-2">Warm-up</p>
+                      <div className="flex gap-3 flex-wrap mb-4">
+                        {warmupSets.map((set, wi) => {
+                          const si = ex.sets.indexOf(set)
+                          return (
+                            <div key={wi} className="flex flex-col items-center gap-1">
+                              <SetCircle
+                                reps={set.reps}
+                                targetReps={set.warmupTargetReps ?? set.reps}
+                                completedAt={set.completedAt}
+                                onTap={() => tapSet(ei, si)}
+                                isWarmup
+                              />
+                              <span className="text-zinc-600 text-[9px]">
+                                {info?.type === 'bodyweight' ? 'BW' : `${set.weight ?? ex.weight}kg`}
+                              </span>
+                            </div>
+                          )
+                        })}
                       </div>
-                    ))}
+                    </>
+                  )}
+                  <div className="flex gap-3 flex-wrap">
+                    {workingSets.map((set, wi) => {
+                      const si = ex.sets.indexOf(set)
+                      return (
+                        <div key={wi} className="flex flex-col items-center gap-1">
+                          <SetCircle
+                            reps={set.reps}
+                            targetReps={ex.targetReps}
+                            completedAt={set.completedAt}
+                            onTap={() => tapSet(ei, si)}
+                          />
+                          <span className="text-zinc-600 text-[9px]">
+                            {set.completedAt
+                              ? (info?.type === 'bodyweight' ? 'BW' : `${set.weight ?? ex.weight}kg`)
+                              : 'pending'}
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -206,7 +235,7 @@ export function ActiveWorkoutScreen() {
         <SetConfigSheet
           exercise={selectedExercise}
           onAdd={(sets, reps, weight) => {
-            addExercise(selectedExercise.id, sets, reps, weight)
+            addExercise(selectedExercise.id, selectedExercise.type, sets, reps, weight)
             setSelectedExercise(null)
             setExpandedIdx(activeSession.exercises.length)
           }}

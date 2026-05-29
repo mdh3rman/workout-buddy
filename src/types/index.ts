@@ -27,7 +27,9 @@ export interface WorkoutPlan {
 export interface SessionSet {
   reps: number
   completedAt: string | null
-  weight?: number  // captured at completion time; fallback to SessionExercise.weight
+  weight?: number
+  isWarmup?: boolean
+  warmupTargetReps?: number  // original target reps for warmup reset
 }
 
 export interface SessionExercise {

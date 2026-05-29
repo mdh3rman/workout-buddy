@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react'
 import { Play } from 'lucide-react'
 import { useWorkoutStore } from '../store/workoutStore'
-import { getPlans, updatePlanLastUsed, db } from '../db/index'
-import type { WorkoutPlan, SessionExercise } from '../types'
+import { getPlans, updatePlanLastUsed } from '../db/index'
+import { buildSessionExercises } from '../lib/warmup'
+import type { WorkoutPlan } from '../types'
 
 function formatRelativeDate(iso: string | null): string {
   if (!iso) return 'never'
@@ -46,13 +47,7 @@ export function HomeScreen() {
 
   const startFromPlan = async (plan: WorkoutPlan) => {
     await updatePlanLastUsed(plan.id)
-    const exercises: SessionExercise[] = plan.exercises.map(pe => ({
-      exerciseId: pe.exerciseId,
-      targetSets: pe.sets,
-      targetReps: pe.reps,
-      weight: pe.weight,
-      sets: Array.from({ length: pe.sets }, () => ({ reps: pe.reps, completedAt: null })),
-    }))
+    const exercises = await buildSessionExercises(plan.exercises)
     startSession(plan.id, plan.name, exercises)
   }
 
