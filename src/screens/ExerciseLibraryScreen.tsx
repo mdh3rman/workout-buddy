@@ -1,6 +1,6 @@
 // src/screens/ExerciseLibraryScreen.tsx
 import { useState, useEffect } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Pencil } from 'lucide-react'
 import { db, getCompletedSessions } from '../db/index'
 import type { Exercise, ExerciseType, MuscleGroup, WorkoutSession } from '../types'
 
@@ -9,21 +9,22 @@ type FilterType = ExerciseType | 'all'
 const EXERCISE_TYPES: ExerciseType[] = ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight']
 const MUSCLE_GROUPS: MuscleGroup[] = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full body']
 
-function NewExerciseSheet({ onSaved, onClose }: { onSaved: () => void; onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [type, setType] = useState<ExerciseType>('barbell')
-  const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>('chest')
+function NewExerciseSheet({ exercise, onSaved, onClose }: { exercise?: Exercise; onSaved: () => void; onClose: () => void }) {
+  const [name, setName] = useState(exercise?.name ?? '')
+  const [type, setType] = useState<ExerciseType>(exercise?.type ?? 'barbell')
+  const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>(exercise?.muscleGroup ?? 'chest')
   const [saving, setSaving] = useState(false)
+
+  const isEdit = !!exercise
 
   const handleSave = async () => {
     if (!name.trim()) return
     setSaving(true)
-    await db.exercises.add({
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      type,
-      muscleGroup,
-    })
+    if (isEdit) {
+      await db.exercises.update(exercise.id, { name: name.trim(), type, muscleGroup })
+    } else {
+      await db.exercises.add({ id: crypto.randomUUID(), name: name.trim(), type, muscleGroup })
+    }
     setSaving(false)
     onSaved()
   }
@@ -33,7 +34,7 @@ function NewExerciseSheet({ onSaved, onClose }: { onSaved: () => void; onClose: 
       <div className="flex-1 bg-black/60" onClick={onClose} />
       <div className="bg-zinc-900 rounded-t-2xl flex flex-col">
         <div className="flex items-center justify-between px-4 py-4 border-b border-zinc-800">
-          <h2 className="text-white font-bold text-base">New Exercise</h2>
+          <h2 className="text-white font-bold text-base">{isEdit ? 'Edit Exercise' : 'New Exercise'}</h2>
           <button onClick={onClose}><X size={20} className="text-zinc-400" /></button>
         </div>
         <div className="p-4 flex flex-col gap-4">
@@ -83,7 +84,7 @@ function NewExerciseSheet({ onSaved, onClose }: { onSaved: () => void; onClose: 
             disabled={!name.trim() || saving}
             className="w-full bg-orange-500 disabled:opacity-40 text-white font-bold py-3 rounded-xl text-sm"
           >
-            Save Exercise
+            {isEdit ? 'Save Changes' : 'Save Exercise'}
           </button>
         </div>
       </div>
@@ -98,6 +99,7 @@ export function ExerciseLibraryScreen() {
   const [selected, setSelected] = useState<Exercise | null>(null)
   const [history, setHistory] = useState<WorkoutSession[]>([])
   const [showNew, setShowNew] = useState(false)
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null)
 
   const load = () => db.exercises.toArray().then(exs =>
     setExercises(exs.sort((a, b) => a.name.localeCompare(b.name)))
@@ -188,22 +190,33 @@ export function ExerciseLibraryScreen() {
         ))}
       </div>
       {filtered.map(ex => (
-        <button
-          key={ex.id}
-          onClick={() => handleSelect(ex)}
-          className="w-full flex justify-between items-center bg-zinc-900 rounded-xl px-4 py-3 mb-2 active:bg-zinc-800"
-        >
-          <div className="text-left">
-            <p className="text-white text-sm font-medium">{ex.name}</p>
-            <p className="text-zinc-500 text-xs capitalize">{ex.type} · {ex.muscleGroup}</p>
-          </div>
-          <span className="text-zinc-600 text-lg">›</span>
-        </button>
+        <div key={ex.id} className="flex items-center bg-zinc-900 rounded-xl mb-2">
+          <button
+            onClick={() => handleSelect(ex)}
+            className="flex-1 flex justify-between items-center px-4 py-3 active:bg-zinc-800 rounded-xl"
+          >
+            <div className="text-left">
+              <p className="text-white text-sm font-medium">{ex.name}</p>
+              <p className="text-zinc-500 text-xs capitalize">{ex.type} · {ex.muscleGroup}</p>
+            </div>
+            <span className="text-zinc-600 text-lg">›</span>
+          </button>
+          <button onClick={() => setEditingExercise(ex)} className="px-3 py-3">
+            <Pencil size={15} className="text-zinc-600" />
+          </button>
+        </div>
       ))}
       {showNew && (
         <NewExerciseSheet
           onSaved={() => { setShowNew(false); load() }}
           onClose={() => setShowNew(false)}
+        />
+      )}
+      {editingExercise && (
+        <NewExerciseSheet
+          exercise={editingExercise}
+          onSaved={() => { setEditingExercise(null); load() }}
+          onClose={() => setEditingExercise(null)}
         />
       )}
     </div>
