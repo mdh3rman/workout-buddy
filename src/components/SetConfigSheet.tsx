@@ -28,9 +28,10 @@ interface SetConfigSheetProps {
   exercise: Exercise
   onAdd: (sets: number, reps: number, weight: number) => void
   onClose: () => void
+  addLabel?: string
 }
 
-export function SetConfigSheet({ exercise, onAdd, onClose }: SetConfigSheetProps) {
+export function SetConfigSheet({ exercise, onAdd, onClose, addLabel = 'Add to Workout' }: SetConfigSheetProps) {
   const [sets, setSets] = useState(3)
   const [reps, setReps] = useState(8)
   const [weight, setWeight] = useState(defaultWeight(exercise.type))
@@ -66,7 +67,7 @@ export function SetConfigSheet({ exercise, onAdd, onClose }: SetConfigSheetProps
           onClick={() => onAdd(sets, reps, weight)}
           className="w-full bg-orange-500 text-white font-bold py-3 rounded-xl"
         >
-          Add to Workout
+          {addLabel}
         </button>
       </div>
     </div>

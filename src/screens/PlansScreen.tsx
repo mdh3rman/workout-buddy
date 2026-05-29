@@ -1,14 +1,16 @@
 // src/screens/PlansScreen.tsx
 import { useState, useEffect } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Plus } from 'lucide-react'
 import { getPlans, deletePlan, updatePlanLastUsed, db } from '../db/index'
 import { useWorkoutStore } from '../store/workoutStore'
+import { CreatePlanSheet } from '../components/CreatePlanSheet'
 import type { WorkoutPlan, SessionExercise } from '../types'
 
 export function PlansScreen() {
   const [plans, setPlans] = useState<WorkoutPlan[]>([])
   const [exerciseNames, setExerciseNames] = useState<Record<string, string>>({})
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [showCreate, setShowCreate] = useState(false)
   const startSession = useWorkoutStore(s => s.startSession)
 
   const load = () => {
@@ -37,7 +39,15 @@ export function PlansScreen() {
 
   return (
     <div className="p-4">
-      <h1 className="text-white font-extrabold text-xl mb-4 pt-2">Plans</h1>
+      <div className="flex items-center justify-between mb-4 pt-2">
+        <h1 className="text-white font-extrabold text-xl">Plans</h1>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 bg-orange-500 text-white text-xs font-bold px-3 py-2 rounded-lg"
+        >
+          <Plus size={14} /> New Plan
+        </button>
+      </div>
       {plans.length === 0 ? (
         <p className="text-zinc-600 text-sm text-center py-12">No saved plans yet.</p>
       ) : (
@@ -65,6 +75,12 @@ export function PlansScreen() {
             )}
           </div>
         ))
+      )}
+      {showCreate && (
+        <CreatePlanSheet
+          onSaved={() => { setShowCreate(false); load() }}
+          onClose={() => setShowCreate(false)}
+        />
       )}
     </div>
   )
