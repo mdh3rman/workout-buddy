@@ -13,7 +13,8 @@ export async function getPreviousPerformance(exerciseId: string): Promise<Sessio
 export function formatPreviousPerformance(exercise: SessionExercise, type: ExerciseType): string {
   const completedSets = exercise.sets.filter(s => s.completedAt !== null)
   const parts = completedSets.map(s => {
-    const weightStr = type === 'bodyweight' ? 'BW' : `${exercise.weight}kg`
+    const w = s.weight ?? exercise.weight
+    const weightStr = type === 'bodyweight' ? 'BW' : `${w}kg`
     return `${weightStr} ×${s.reps}`
   })
   return `Last time: ${parts.join(' · ')}`

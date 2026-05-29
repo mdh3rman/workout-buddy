@@ -27,6 +27,7 @@ export interface WorkoutPlan {
 export interface SessionSet {
   reps: number
   completedAt: string | null
+  weight?: number  // captured at completion time; fallback to SessionExercise.weight
 }
 
 export interface SessionExercise {

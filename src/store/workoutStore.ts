@@ -67,7 +67,7 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
       const sets = ex.sets.map((s, si) => {
         if (si !== setIdx) return s
         if (s.completedAt === null) {
-          return { reps: ex.targetReps, completedAt: new Date().toISOString() }
+          return { reps: ex.targetReps, completedAt: new Date().toISOString(), weight: ex.weight }
         }
         return { ...s, reps: Math.max(0, s.reps - 1) }
       })

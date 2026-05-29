@@ -151,7 +151,9 @@ export function ActiveWorkoutScreen() {
                           onTap={() => tapSet(ei, si)}
                         />
                         <span className="text-zinc-600 text-[9px]">
-                          {set.completedAt ? (ex.weight > 0 ? `${ex.weight}kg` : 'BW') : 'pending'}
+                          {set.completedAt
+                            ? (info?.type === 'bodyweight' ? 'BW' : `${set.weight ?? ex.weight}kg`)
+                            : 'pending'}
                         </span>
                       </div>
                     ))}
