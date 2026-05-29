@@ -34,11 +34,13 @@ export function ActiveWorkoutScreen() {
   const tapSet = useWorkoutStore(s => s.tapSet)
   const addExercise = useWorkoutStore(s => s.addExercise)
   const updateWeight = useWorkoutStore(s => s.updateWeight)
+  const cancelSession = useWorkoutStore(s => s.cancelSession)
 
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
   const [showPicker, setShowPicker] = useState(false)
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [showEndModal, setShowEndModal] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [prevPerf, setPrevPerf] = useState<Record<string, string>>({})
   const [exerciseMap, setExerciseMap] = useState<Record<string, Exercise>>({})
   const [duration, setDuration] = useState('')
@@ -174,11 +176,17 @@ export function ActiveWorkoutScreen() {
           </button>
         </div>
 
-        {/* End workout */}
-        <div className="px-4 pb-4">
+        {/* End / Cancel workout */}
+        <div className="px-4 pb-4 flex gap-3">
+          <button
+            onClick={() => setShowCancelConfirm(true)}
+            className="flex-1 bg-zinc-800 rounded-xl py-3 text-zinc-500 font-semibold text-sm"
+          >
+            Cancel
+          </button>
           <button
             onClick={() => setShowEndModal(true)}
-            className="w-full bg-zinc-800 rounded-xl py-3 text-red-400 font-semibold text-sm"
+            className="flex-1 bg-zinc-800 rounded-xl py-3 text-orange-400 font-semibold text-sm"
           >
             End Workout
           </button>
@@ -211,6 +219,30 @@ export function ActiveWorkoutScreen() {
           session={activeSession}
           onClose={() => setShowEndModal(false)}
         />
+      )}
+
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex flex-col">
+          <div className="flex-1 bg-black/80" onClick={() => setShowCancelConfirm(false)} />
+          <div className="bg-zinc-900 rounded-t-2xl p-6">
+            <p className="text-white font-bold text-base mb-1 text-center">Cancel workout?</p>
+            <p className="text-zinc-500 text-sm text-center mb-6">This session won't be saved.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 bg-zinc-800 text-white font-semibold py-3 rounded-xl text-sm"
+              >
+                Keep going
+              </button>
+              <button
+                onClick={() => cancelSession()}
+                className="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl text-sm"
+              >
+                Cancel workout
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

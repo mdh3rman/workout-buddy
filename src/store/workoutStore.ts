@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { saveSession, getActiveSession } from '../db/index'
+import { saveSession, getActiveSession, deleteSession } from '../db/index'
 import type { WorkoutSession, SessionExercise, RestTimerState, Screen } from '../types'
 
 interface WorkoutStore {
@@ -12,6 +12,7 @@ interface WorkoutStore {
   tapSet: (exerciseIdx: number, setIdx: number) => void
   updateWeight: (exerciseIdx: number, newWeight: number) => void
   endSession: () => Promise<WorkoutSession>
+  cancelSession: () => Promise<void>
 
   startRest: (seconds?: number) => void
   tickRest: () => void
@@ -101,6 +102,13 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
     await saveSession(completed)
     set({ activeSession: null, currentScreen: 'home' })
     return completed
+  },
+
+  cancelSession: async () => {
+    const { activeSession } = get()
+    if (!activeSession) return
+    await deleteSession(activeSession.id)
+    set({ activeSession: null, currentScreen: 'home', restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120 } })
   },
 
   startRest: (seconds = 120) => {

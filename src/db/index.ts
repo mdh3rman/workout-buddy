@@ -42,6 +42,10 @@ export async function deletePlan(id: string): Promise<void> {
   await db.workoutPlans.delete(id)
 }
 
+export async function deleteSession(id: string): Promise<void> {
+  await db.workoutSessions.delete(id)
+}
+
 export async function getPlans(): Promise<WorkoutPlan[]> {
   const all = await db.workoutPlans.toArray()
   return all.sort((a, b) => {
