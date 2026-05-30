@@ -28,9 +28,9 @@ describe('startSession', () => {
 })
 
 describe('addExercise', () => {
-  it('adds exercise with correct sets/reps/weight', () => {
+  it('adds working sets and warmup sets for heavy barbell exercise', () => {
     useWorkoutStore.getState().startSession()
-    useWorkoutStore.getState().addExercise('barbell-bench-press', 4, 5, 60)
+    useWorkoutStore.getState().addExercise('barbell-bench-press', 'barbell', 4, 5, 60)
     const { activeSession } = useWorkoutStore.getState()
     expect(activeSession?.exercises).toHaveLength(1)
     const ex = activeSession!.exercises[0]
@@ -38,15 +38,27 @@ describe('addExercise', () => {
     expect(ex.targetSets).toBe(4)
     expect(ex.targetReps).toBe(5)
     expect(ex.weight).toBe(60)
-    expect(ex.sets).toHaveLength(4)
-    expect(ex.sets[0]).toEqual({ reps: 5, completedAt: null })
+    const workingSets = ex.sets.filter(s => !s.isWarmup)
+    const warmupSets = ex.sets.filter(s => s.isWarmup)
+    expect(workingSets).toHaveLength(4)
+    expect(warmupSets).toHaveLength(3) // 40%, 60%, 80% for 60kg barbell
+    expect(workingSets[0]).toEqual({ reps: 5, completedAt: null })
+  })
+
+  it('adds no warmup sets for bodyweight exercise', () => {
+    useWorkoutStore.getState().startSession()
+    useWorkoutStore.getState().addExercise('push-up', 'bodyweight', 3, 10, 0)
+    const ex = useWorkoutStore.getState().activeSession!.exercises[0]
+    expect(ex.sets.filter(s => s.isWarmup)).toHaveLength(0)
+    expect(ex.sets).toHaveLength(3)
   })
 })
 
 describe('tapSet', () => {
+  // Use bodyweight so no warmup sets are injected — tests focus on working-set tap behavior
   beforeEach(() => {
     useWorkoutStore.getState().startSession()
-    useWorkoutStore.getState().addExercise('barbell-bench-press', 4, 5, 60)
+    useWorkoutStore.getState().addExercise('push-up', 'bodyweight', 4, 5, 0)
   })
 
   it('completes a pending set at target reps', () => {
@@ -81,7 +93,7 @@ describe('tapSet', () => {
 describe('skipRest', () => {
   it('deactivates rest timer', () => {
     useWorkoutStore.getState().startSession()
-    useWorkoutStore.getState().addExercise('barbell-bench-press', 1, 5, 60)
+    useWorkoutStore.getState().addExercise('push-up', 'bodyweight', 1, 5, 0)
     useWorkoutStore.getState().tapSet(0, 0)
     useWorkoutStore.getState().skipRest()
     expect(useWorkoutStore.getState().restTimer.isActive).toBe(false)

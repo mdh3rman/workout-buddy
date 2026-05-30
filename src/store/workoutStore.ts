@@ -74,9 +74,10 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
           const completedReps = s.isWarmup ? s.reps : ex.targetReps
           return { ...s, reps: completedReps, completedAt: new Date().toISOString(), weight: s.weight ?? ex.weight }
         }
-        if (s.reps === 0) {
+        if (s.reps === 0 && s.isWarmup) {
           return { ...s, reps: s.warmupTargetReps ?? ex.targetReps, completedAt: null, weight: undefined }
         }
+        if (s.reps === 0) return s
         return { ...s, reps: s.reps - 1 }
       })
       return { ...ex, sets }

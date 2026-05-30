@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Play } from 'lucide-react'
 import { useWorkoutStore } from '../store/workoutStore'
-import { getPlans, updatePlanLastUsed } from '../db/index'
+import { getPlans, updatePlanLastUsed, db } from '../db/index'
 import { buildSessionExercises } from '../lib/warmup'
 import type { WorkoutPlan } from '../types'
 
