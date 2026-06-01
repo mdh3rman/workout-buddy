@@ -41,7 +41,7 @@ describe('addExercise', () => {
     const workingSets = ex.sets.filter(s => !s.isWarmup)
     const warmupSets = ex.sets.filter(s => s.isWarmup)
     expect(workingSets).toHaveLength(4)
-    expect(warmupSets).toHaveLength(3) // 40%, 60%, 80% for 60kg barbell
+    expect(warmupSets).toHaveLength(3) // 50%, 70%, 87.5% for 60kg barbell
     expect(workingSets[0]).toEqual({ reps: 5, completedAt: null })
   })
 

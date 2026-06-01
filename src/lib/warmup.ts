@@ -1,8 +1,11 @@
 import { db } from '../db/index'
 import type { ExerciseType, PlanExercise, SessionExercise, SessionSet } from '../types'
 
+// Warmup skipped entirely if working weight is below this threshold.
+// For barbell: the empty bar (20kg) never needs warming up since you can't go lighter.
+// For others: no warmup below 20kg as the loads are light enough to self-warm.
 const WARMUP_THRESHOLD: Record<ExerciseType, number> = {
-  barbell: 40,
+  barbell: 20,
   dumbbell: 20,
   cable: 20,
   machine: 20,
@@ -17,6 +20,8 @@ const STEP: Record<ExerciseType, number> = {
   bodyweight: 0,
 }
 
+// Minimum weight a warmup set can be for each equipment type.
+// For barbell this is the empty bar (20kg) — there is no lighter standard barbell.
 const MIN_WEIGHT: Record<ExerciseType, number> = {
   barbell: 20,
   dumbbell: 1.25,
@@ -25,47 +30,38 @@ const MIN_WEIGHT: Record<ExerciseType, number> = {
   bodyweight: 0,
 }
 
+// Fixed 3-step warm-up structure:
+// 1. 50%   × 10 reps  — Pattern (groove the movement)
+// 2. 70%   ×  5 reps  — Load    (feel the weight)
+// 3. 87.5% ×  2 reps  — Prime   (prime the nervous system)
+const WARMUP_SPECS = [
+  { pct: 0.5,   reps: 10 },
+  { pct: 0.7,   reps: 5  },
+  { pct: 0.875, reps: 2  },
+] as const
+
 function roundToStep(weight: number, type: ExerciseType): number {
   const step = STEP[type]
   if (step === 0) return 0
   return Math.max(MIN_WEIGHT[type], Math.round(weight / step) * step)
 }
 
-type WarmupSpec = { pct: number; reps: number }
-
-function warmupSpecs(weight: number, threshold: number): WarmupSpec[] {
-  if (weight >= threshold * 2.5) {
-    return [
-      { pct: 0.3, reps: 5 },
-      { pct: 0.5, reps: 5 },
-      { pct: 0.7, reps: 3 },
-      { pct: 0.9, reps: 2 },
-    ]
-  }
-  if (weight >= threshold * 1.5) {
-    return [
-      { pct: 0.4, reps: 5 },
-      { pct: 0.6, reps: 5 },
-      { pct: 0.8, reps: 3 },
-    ]
-  }
-  return [
-    { pct: 0.5, reps: 5 },
-    { pct: 0.8, reps: 3 },
-  ]
-}
-
 export function generateWarmupSets(weight: number, type: ExerciseType): SessionSet[] {
-  const threshold = WARMUP_THRESHOLD[type]
-  if (weight < threshold) return []
+  if (weight < WARMUP_THRESHOLD[type]) return []
 
-  return warmupSpecs(weight, threshold).map(({ pct, reps }) => ({
-    reps,
-    completedAt: null,
-    weight: roundToStep(weight * pct, type),
-    isWarmup: true,
-    warmupTargetReps: reps,
-  }))
+  const sets: SessionSet[] = []
+  let lastWeight = -1
+
+  for (const { pct, reps } of WARMUP_SPECS) {
+    const warmupWeight = roundToStep(weight * pct, type)
+    // Skip if this rounds to the same weight as the previous set (dedup)
+    // or if it reaches the working weight itself.
+    if (warmupWeight >= weight || warmupWeight === lastWeight) continue
+    sets.push({ reps, completedAt: null, weight: warmupWeight, isWarmup: true, warmupTargetReps: reps })
+    lastWeight = warmupWeight
+  }
+
+  return sets
 }
 
 export async function buildSessionExercises(planExercises: PlanExercise[]): Promise<SessionExercise[]> {
