@@ -4,6 +4,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Prevent iOS from auto-zooming on input focus (requires font-size >= 16px) */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
 html, body, #root {
   height: 100%;
   background-color: #09090b;
