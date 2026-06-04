@@ -4,7 +4,7 @@ import { useWorkoutStore } from './workoutStore'
 
 const INITIAL_STATE = {
   activeSession: null,
-  restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120 },
+  restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120, endTime: null },
   currentScreen: 'home' as const,
 }
 
@@ -101,14 +101,14 @@ describe('skipRest', () => {
 })
 
 describe('tickRest', () => {
-  it('decrements secondsRemaining', () => {
-    useWorkoutStore.setState({ restTimer: { isActive: true, secondsRemaining: 30, totalSeconds: 120 } })
+  it('decrements secondsRemaining based on wall clock', () => {
+    useWorkoutStore.setState({ restTimer: { isActive: true, secondsRemaining: 30, totalSeconds: 120, endTime: Date.now() + 29000 } })
     useWorkoutStore.getState().tickRest()
     expect(useWorkoutStore.getState().restTimer.secondsRemaining).toBe(29)
   })
 
-  it('deactivates timer when it reaches 0', () => {
-    useWorkoutStore.setState({ restTimer: { isActive: true, secondsRemaining: 1, totalSeconds: 120 } })
+  it('deactivates timer when endTime has passed', () => {
+    useWorkoutStore.setState({ restTimer: { isActive: true, secondsRemaining: 1, totalSeconds: 120, endTime: Date.now() - 100 } })
     useWorkoutStore.getState().tickRest()
     expect(useWorkoutStore.getState().restTimer.isActive).toBe(false)
     expect(useWorkoutStore.getState().restTimer.secondsRemaining).toBe(0)
