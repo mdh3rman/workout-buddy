@@ -53,4 +53,5 @@ export interface RestTimerState {
   isActive: boolean
   secondsRemaining: number
   totalSeconds: number
+  endTime: number | null
 }

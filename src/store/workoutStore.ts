@@ -26,7 +26,7 @@ interface WorkoutStore {
 
 export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
   activeSession: null,
-  restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120 },
+  restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120, endTime: null },
   currentScreen: 'home',
 
   startSession: (planId, name, exercises = []) => {
@@ -113,31 +113,32 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
     const { activeSession } = get()
     if (!activeSession) return
     await deleteSession(activeSession.id)
-    set({ activeSession: null, currentScreen: 'home', restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120 } })
+    set({ activeSession: null, currentScreen: 'home', restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120, endTime: null } })
   },
 
   startRest: (seconds = 120) => {
-    set({ restTimer: { isActive: true, secondsRemaining: seconds, totalSeconds: seconds } })
+    set({ restTimer: { isActive: true, secondsRemaining: seconds, totalSeconds: seconds, endTime: Date.now() + seconds * 1000 } })
   },
 
   tickRest: () => {
     const { restTimer } = get()
-    if (!restTimer.isActive) return
-    const next = restTimer.secondsRemaining - 1
+    if (!restTimer.isActive || restTimer.endTime === null) return
+    const next = Math.round((restTimer.endTime - Date.now()) / 1000)
     if (next <= 0) {
-      set({ restTimer: { ...restTimer, isActive: false, secondsRemaining: 0 } })
+      set({ restTimer: { ...restTimer, isActive: false, secondsRemaining: 0, endTime: null } })
     } else {
       set({ restTimer: { ...restTimer, secondsRemaining: next } })
     }
   },
 
   skipRest: () => {
-    set({ restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120 } })
+    set({ restTimer: { isActive: false, secondsRemaining: 0, totalSeconds: 120, endTime: null } })
   },
 
   addRestTime: (seconds) => {
     const { restTimer } = get()
-    set({ restTimer: { ...restTimer, secondsRemaining: restTimer.secondsRemaining + seconds } })
+    const newEndTime = (restTimer.endTime ?? Date.now()) + seconds * 1000
+    set({ restTimer: { ...restTimer, secondsRemaining: restTimer.secondsRemaining + seconds, endTime: newEndTime } })
   },
 
   setScreen: (screen) => set({ currentScreen: screen }),

@@ -10,4 +10,13 @@ export function useRestTimer() {
     const interval = setInterval(tickRest, 1000)
     return () => clearInterval(interval)
   }, [isActive, tickRest])
+
+  useEffect(() => {
+    if (!isActive) return
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tickRest()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [isActive, tickRest])
 }
