@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { useWorkoutStore } from '../store/workoutStore'
 import { SetCircle } from '../components/SetCircle'
+import { AdjustRepsModal } from '../components/AdjustRepsModal'
 import { RestTimerBar } from '../components/RestTimerBar'
 import { ExercisePicker } from '../components/ExercisePicker'
 import { SetConfigSheet } from '../components/SetConfigSheet'
@@ -32,6 +33,7 @@ function calcVolume(exercises: SessionExercise[]): number {
 export function ActiveWorkoutScreen() {
   const activeSession = useWorkoutStore(s => s.activeSession)
   const tapSet = useWorkoutStore(s => s.tapSet)
+  const adjustSetReps = useWorkoutStore(s => s.adjustSetReps)
   const addExercise = useWorkoutStore(s => s.addExercise)
   const updateWeight = useWorkoutStore(s => s.updateWeight)
   const cancelSession = useWorkoutStore(s => s.cancelSession)
@@ -41,6 +43,7 @@ export function ActiveWorkoutScreen() {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [showEndModal, setShowEndModal] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [adjustingSet, setAdjustingSet] = useState<{ exerciseIdx: number; setIdx: number; reps: number; isWarmup: boolean } | null>(null)
   const [prevPerf, setPrevPerf] = useState<Record<string, string>>({})
   const [exerciseMap, setExerciseMap] = useState<Record<string, Exercise>>({})
   const [duration, setDuration] = useState('')
@@ -158,6 +161,7 @@ export function ActiveWorkoutScreen() {
                                 targetReps={set.warmupTargetReps ?? set.reps}
                                 completedAt={set.completedAt}
                                 onTap={() => tapSet(ei, si)}
+                                onLongPress={() => setAdjustingSet({ exerciseIdx: ei, setIdx: si, reps: set.warmupTargetReps ?? set.reps, isWarmup: true })}
                                 isWarmup
                               />
                               <span className="text-zinc-600 text-[9px]">
@@ -179,6 +183,7 @@ export function ActiveWorkoutScreen() {
                             targetReps={ex.targetReps}
                             completedAt={set.completedAt}
                             onTap={() => tapSet(ei, si)}
+                            onLongPress={() => setAdjustingSet({ exerciseIdx: ei, setIdx: si, reps: set.reps, isWarmup: false })}
                           />
                           <span className="text-zinc-600 text-[9px]">
                             {set.completedAt
@@ -247,6 +252,18 @@ export function ActiveWorkoutScreen() {
         <EndWorkoutModal
           session={activeSession}
           onClose={() => setShowEndModal(false)}
+        />
+      )}
+
+      {adjustingSet && (
+        <AdjustRepsModal
+          initialReps={adjustingSet.reps}
+          isWarmup={adjustingSet.isWarmup}
+          onConfirm={(newReps) => {
+            adjustSetReps(adjustingSet.exerciseIdx, adjustingSet.setIdx, newReps)
+            setAdjustingSet(null)
+          }}
+          onClose={() => setAdjustingSet(null)}
         />
       )}
 

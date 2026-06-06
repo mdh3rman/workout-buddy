@@ -11,6 +11,7 @@ interface WorkoutStore {
   startSession: (planId?: string, name?: string, exercises?: SessionExercise[]) => void
   addExercise: (exerciseId: string, exerciseType: ExerciseType, sets: number, reps: number, weight: number) => void
   tapSet: (exerciseIdx: number, setIdx: number) => void
+  adjustSetReps: (exerciseIdx: number, setIdx: number, newReps: number) => void
   updateWeight: (exerciseIdx: number, newWeight: number) => void
   endSession: () => Promise<WorkoutSession>
   cancelSession: () => Promise<void>
@@ -86,6 +87,33 @@ export const useWorkoutStore = create<WorkoutStore>((set, get) => ({
     set({ activeSession: updated })
     saveSession(updated).catch(err => console.error('Failed to persist session:', err))
     if (wasCompleting) get().startRest()
+  },
+
+  adjustSetReps: (exerciseIdx, setIdx, newReps) => {
+    const { activeSession } = get()
+    if (!activeSession) return
+    const exercises = activeSession.exercises.map((ex, ei) => {
+      if (ei !== exerciseIdx) return ex
+      const isWorking = !ex.sets[setIdx].isWarmup
+      const sets = ex.sets.map((s, si) => {
+        if (si === setIdx) {
+          if (s.isWarmup) {
+            return s.completedAt === null
+              ? { ...s, reps: newReps, warmupTargetReps: newReps }
+              : { ...s, reps: newReps }
+          }
+          return { ...s, reps: newReps }
+        }
+        if (isWorking && si > setIdx && !s.isWarmup && s.completedAt === null) {
+          return { ...s, reps: newReps }
+        }
+        return s
+      })
+      return { ...ex, targetReps: isWorking ? newReps : ex.targetReps, sets }
+    })
+    const updated: WorkoutSession = { ...activeSession, exercises }
+    set({ activeSession: updated })
+    saveSession(updated).catch(err => console.error('Failed to persist session:', err))
   },
 
   updateWeight: (exerciseIdx, newWeight) => {
